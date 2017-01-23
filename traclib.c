@@ -126,57 +126,79 @@ const char *eval_print_string(const char *s) {
     return NULL;
 }
 
+/* creates an array of argptrs (const char *), for funcname and args,
+ * plus an extra NULL ptr to indicate end */
+char **find_args(char *ns, int start, int end) {
+    int pos = start;
+    int argcount = 0;
+    while(ns[pos] != FUNCEND) {
+        if(ns[pos] == ARGPTR) {
+            argcount++;
+        }
+        pos++;
+    }
+    argcount++; /* account for func name */
+    char **argptrs = (char**)malloc((argcount+1)*sizeof(char*));
+    argptrs[argcount] = 0; /* NULL terminating ptr */
+    pos = start;
+    int lastpos = start;
+    for(int i = 0; i < argcount; i++) {
+        /* move to end of arg */
+        while(ns[pos] != FUNCEND && ns[pos] != ARGPTR) pos++;
+        ns[pos] = 0; /* nul-terminate arg, for strcpy */
+        /* copy arg to argptrs */
+        argptrs[i] = (char*)malloc(pos-lastpos);
+        strcpy(argptrs[i], ns+lastpos);
+        pos++;
+        lastpos = pos;
+    }
+    return argptrs;
+}
+
+void free_args(char **argptrs) {
+    int i = 0;
+    while(argptrs[i] != NULL) {
+        free((void*)argptrs[i]);
+        i++;
+    }
+    free((void*)argptrs);
+}
+
+void print_args(char **argptrs) {
+    int i = 0;
+    while(argptrs[i] != NULL) {
+        printf("arg %d: \"%s\"\n", i, argptrs[i]);
+        i++;
+    }
+}
+
 const char *func_dispatch(char *ns, int start, int end)
 {
-    /* first, decide which function is being called, then extract args */
+    const char *rval = NULL;
+    char **argptrs = find_args(ns, start, end);
 
-    /* find end of function name, i.e., argument start */
-    int argstart = start;
-    while(argstart <= end) {
-        if(ns[argstart] == ARGPTR || ns[argstart] == FUNCEND) break;
-        argstart++;
-    }
-    ns[argstart] = 0; /* nul-terminate so we can use strncmp */
-    argstart++;
+    //print_args(argptrs);
 
     /* figure out which function is being called */
-    if(strncmp(ns+start, "rs", MAX_STRING_SIZE) == 0) {
-        /* no args */
-        return eval_read_string();
+    if(strncmp(argptrs[0], "rs", MAX_STRING_SIZE) == 0) {
+        rval = eval_read_string();
     }
-    else if(strncmp(ns+start, "ps", MAX_STRING_SIZE) == 0) {
-        /* one arg; we know it's start (argstart) and its end (end),
-         * so we'll just nul-terminate end */
-        ns[end] = 0;
-        return eval_print_string(ns+argstart);
+    else if(strncmp(argptrs[0], "ps", MAX_STRING_SIZE) == 0) {
+        rval = eval_print_string(argptrs[1]);
     }
-    else if(strncmp(ns+start, "cl", MAX_STRING_SIZE) == 0) {
-        /* one arg; we know it's start (argstart) and its end (end),
-         * so we'll just nul-terminate end */
-        ns[end] = 0;
-        return eval_call_string(ns+argstart);
+    else if(strncmp(argptrs[0], "cl", MAX_STRING_SIZE) == 0) {
+        rval = eval_call_string(argptrs[1]);
     }
-    else if(strncmp(ns+start, "ds", MAX_STRING_SIZE) == 0) {
-        /* two args */
-        char *argptrs[2];
-        int pos = argstart;
-        int lastpos = argstart;
-        for(int i = 0; i < 2; i++) {
-            while(ns[pos] != ARGPTR && ns[pos] != FUNCEND) pos++;
-            ns[pos] = 0;
-            argptrs[i] = (char*)malloc(pos-lastpos);
-            strcpy(argptrs[i], ns+lastpos);
-            pos++;
-            lastpos = pos;
-        }
-        return eval_define_string(argptrs[0], argptrs[1]);
+    else if(strncmp(argptrs[0], "ds", MAX_STRING_SIZE) == 0) {
+        rval = eval_define_string(argptrs[1], argptrs[2]);
     }
     else
     {
-        printf("unknown function: \"%s\"\n", ns+start);
-        //printf("ns: "); print_ns(ns);
-        return NULL;
+        printf("unknown function: \"%s\"\n", argptrs[0]);
+        rval = NULL;
     }
+    free_args(argptrs);
+    return rval;
 }
 
 /* evaluate an input string (which may cause recursive eval),
@@ -405,7 +427,7 @@ const char *eval(char *s) {
     /* Delete the neutral string, initialize its pointers, reload a new copy of
      * the idling procedure into the active string, reset the scanning pointer
      * to the beginning of the idling procedure, and go to rule 1. */
-    //printf("resetting\n");
+
     free(ns);
     free(s);
     asprintf(&s, "#(ps,#(rs))");

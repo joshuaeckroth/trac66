@@ -33,6 +33,8 @@ const char *eval_call_string(const char *name);
 const char *eval_read_string();
 const char *eval_print_string(const char *s);
 const char *func_dispatch(char *ns, int start, int end);
+char **find_args(char *ns, int start, int end);
+void free_args(char **argptrs);
 const char *eval(char *s);
 
 #endif
