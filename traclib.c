@@ -1,7 +1,11 @@
 #include "trac.h"
+/* _GNU_SOURCE for asprintf */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+tocentry *tochead;
 
 void print_ns(const char *ns) {
     int i = 0;
@@ -109,11 +113,14 @@ const char *eval_call_string(const char *name) {
 
 /* #(rs) */
 const char *eval_read_string() {
-    //printf("read string\n");
+    /* printf("read string\n"); */
     char *s = NULL;
     size_t slen;
     ssize_t nchars = getdelim(&s, &slen, READ_STRING_DELIM, stdin);
-    //printf("got (%d): %s\n", nchars, s);
+    /* printf("got (%d): %s\n", (int)nchars, s); */
+    if(nchars == -1) {
+        return (const char*)-1;
+    }
     /* remove delimiter */
     s[nchars-1] = 0;
     return s;
@@ -121,7 +128,7 @@ const char *eval_read_string() {
 
 /* #(ps, foo) */
 const char *eval_print_string(const char *s) {
-    //printf("print string: %s\n", s);
+    /* printf("print string: %s\n", s); */
     printf("%s\n", s);
     return NULL;
 }
@@ -172,6 +179,7 @@ void print_args(char **argptrs) {
     }
 }
 
+/* return -1 to indicate eval() should quit, e.g. eval_read_string reads EOL/EOT */
 const char *func_dispatch(char *ns, int start, int end)
 {
     const char *rval = NULL;
@@ -218,6 +226,10 @@ const char *eval(char *s) {
      * no character left (active string empty), go to rule 14 */
     if(sp >= slen) goto rule14;
 
+    if(s[sp] == 0x04) { /* Ctrl-D */
+        return NULL;
+    }
+
     /*
     printf("-s:  ");
     print_ns(s);
@@ -237,8 +249,7 @@ const char *eval(char *s) {
         s[sp] = DELETED;
         /* find matching end parenthesis */
         int parendepth = 0;
-        sp = sp+1;
-        while(sp < slen) {
+        while(++sp < slen) {
             if(s[sp] == ')' && parendepth == 0) {
                 s[sp] = DELETED;
                 sp++;
@@ -252,7 +263,6 @@ const char *eval(char *s) {
                 ns[cl] = s[sp];
                 cl++;
             }
-            sp++;
         }
         goto rule1;
     }
@@ -357,6 +367,9 @@ const char *eval(char *s) {
         //print_ns(ns);
         fval = func_dispatch(ns, funcstart+1, cl);
         //printf("got fval: %s\n", fval);
+        if(fval == (const char*)-1) {
+            return fval;
+        }
 
         goto rule10;
     }
@@ -428,20 +441,15 @@ const char *eval(char *s) {
      * the idling procedure into the active string, reset the scanning pointer
      * to the beginning of the idling procedure, and go to rule 1. */
 
+    /* Ignore above, we have our own technique for eval */
+
     free(ns);
     free(s);
-    asprintf(&s, "#(ps,#(rs))");
-    slen = strnlen(s, MAX_STRING_SIZE);
-    sp = 0;
-    ns = (char*)calloc(MAX_STRING_SIZE, 1);
-    cl = 0;
-    fval = NULL;
-    funcstart = -1;
-    goto rule1;
+    return NULL;
 
     rule15:
     /* Move the scanning pointer ahead to the next character. Go to rule 1. */
-    //printf("sp %d (%c) moving to %d (%c)\n", sp, s[sp], sp+1, s[sp+1]);
+    /* printf("sp %d (%c) moving to %d (%c)\n", sp, s[sp], sp+1, s[sp+1]); */
     sp++;
     goto rule1;
 }

@@ -20,7 +20,7 @@ typedef struct tocentry {
     struct tocentry *next;
 } tocentry;
 
-tocentry *tochead;
+extern tocentry *tochead;
 void define_string(const char *name, const char *val);
 const char *get_string(const char *name);
 void free_toc();
