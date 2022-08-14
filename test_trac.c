@@ -7,36 +7,45 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 int main() {
-    freopen("test.out", "w", stdout);
+    FILE *out = fopen("test.out", "w");
 
     char *s;
 
     asprintf(&s, "#(ds,AA,CAT)");
-    eval(s);
-    /* assert(rval == NULL); */
+    eval(s, out);
     asprintf(&s, "#(ds,BB,(#(cl,AA)))");
-    eval(s);
-    /* assert(rval == NULL); */
+    eval(s, out);
     asprintf(&s, "#(ps,(#(cl,BB)))");
-    eval(s);
-    /* assert(strcmp(rval, "#(cl,BB)") == 0); */
+    eval(s, out);
     asprintf(&s, "#(ps,##(cl,BB))");
-    eval(s);
-    /* assert(strcmp(rval, "#(cl,AA)") == 0); */
+    eval(s, out);
     asprintf(&s, "#(ps,#(cl,BB))");
-    eval(s);
-    /* assert(strcmp(rval, "CAT") == 0); */
+    eval(s, out);
+
+    fclose(out);
 
     pid_t child = fork();
     if(child == 0) {
-        char *argv[] = {"/usr/bin/diff", "test.gold", "test.out", 0};
-        execv("/usr/bin/diff", argv);
+        char *argv[] = {"/usr/bin/diff", "-y", "test.gold", "test.out", 0};
+        int result = execv("/usr/bin/diff", argv);
+        if(result == -1) {
+            perror("Error:");
+        }
     } else {
         int wstatus;
-        wait(&wstatus);
-        fprintf(stderr, "Done.\n");
+        pid_t result = wait(&wstatus);
+        if(result == child) {
+            if(WEXITSTATUS(wstatus) == 0) {
+                printf("\nAll tests passed.\n");
+            } else {
+                printf("\nFailures: %d\n", WEXITSTATUS(wstatus));
+            }
+        } else {
+            perror("Error:");
+        }
     }
 
     return 0;

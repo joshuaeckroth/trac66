@@ -12,7 +12,7 @@ int main()
     char *s = NULL;
     do {
         asprintf(&s, "#(ps,#(rs))");
-    } while(eval(s) != (const char*)-1);
+    } while(eval(s, stdout) != (const char*)-1);
 
     return 0;
 }

@@ -10,6 +10,10 @@
 #define NEUTRALFUNC 1 /* ASCII SOH (start of heading) */
 #define FUNCEND 3 /* ASCII ETX (end of text) */
 
+/* _GNU_SOURCE for asprintf */
+#define _GNU_SOURCE
+#include <stdio.h>
+
 /* table of contents */
 
 #define MAX_TOC_NAME_SIZE 256
@@ -31,11 +35,11 @@ void debug_print_toc();
 const char *eval_define_string(const char *name, const char *val);
 const char *eval_call_string(const char *name);
 const char *eval_read_string();
-const char *eval_print_string(const char *s);
-const char *func_dispatch(char *ns, int start, int end);
+const char *eval_print_string(const char *s, FILE *out);
+const char *func_dispatch(char *ns, int start, int end, FILE *out);
 char **find_args(char *ns, int start, int end);
 void free_args(char **argptrs);
-const char *eval(char *s);
+const char *eval(char *s, FILE *out);
 
 #endif
 

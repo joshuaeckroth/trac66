@@ -127,9 +127,9 @@ const char *eval_read_string() {
 }
 
 /* #(ps, foo) */
-const char *eval_print_string(const char *s) {
+const char *eval_print_string(const char *s, FILE *out) {
     /* printf("print string: %s\n", s); */
-    printf("%s\n", s);
+    fprintf(out, "%s\n", s);
     return NULL;
 }
 
@@ -180,7 +180,7 @@ void print_args(char **argptrs) {
 }
 
 /* return -1 to indicate eval() should quit, e.g. eval_read_string reads EOL/EOT */
-const char *func_dispatch(char *ns, int start, int end)
+const char *func_dispatch(char *ns, int start, int end, FILE *out)
 {
     const char *rval = NULL;
     char **argptrs = find_args(ns, start, end);
@@ -192,7 +192,7 @@ const char *func_dispatch(char *ns, int start, int end)
         rval = eval_read_string();
     }
     else if(strncmp(argptrs[0], "ps", MAX_STRING_SIZE) == 0) {
-        rval = eval_print_string(argptrs[1]);
+        rval = eval_print_string(argptrs[1], out);
     }
     else if(strncmp(argptrs[0], "cl", MAX_STRING_SIZE) == 0) {
         rval = eval_call_string(argptrs[1]);
@@ -212,7 +212,7 @@ const char *func_dispatch(char *ns, int start, int end)
 /* evaluate an input string (which may cause recursive eval),
  * return resulting string or null; this func will call helper
  * funcs above, e.g., eval_call(); algorithm follows from mooers1966trac */
-const char *eval(char *s) {
+const char *eval(char *s, FILE *out) {
     int slen = strnlen(s, MAX_STRING_SIZE);
     /* s is the "active string" */
     int sp = 0; /* sp is the "scanning pointer" */
@@ -365,7 +365,7 @@ const char *eval(char *s) {
         //printf("func dispatch: %d, %d\n", funcstart+1, cl);
         //printf("ns: ");
         //print_ns(ns);
-        fval = func_dispatch(ns, funcstart+1, cl);
+        fval = func_dispatch(ns, funcstart+1, cl, out);
         //printf("got fval: %s\n", fval);
         if(fval == (const char*)-1) {
             return fval;
