@@ -7,6 +7,8 @@
 
 tocentry *tochead;
 
+int metachar = '\'';
+
 void print_ns(const char *ns) {
     int i = 0;
     while(ns[i] != 0) {
@@ -116,7 +118,15 @@ const char *eval_read_string() {
     /* printf("read string\n"); */
     char *s = NULL;
     size_t slen;
-    ssize_t nchars = getdelim(&s, &slen, READ_STRING_DELIM, stdin);
+    printf("> ");
+    ssize_t nchars = getdelim(&s, &slen, metachar, stdin);
+    if(metachar != '\n') {
+        /* consume \n character */
+        char *dummy = NULL;
+        size_t dummylen;
+        getline(&dummy, &dummylen, stdin);
+    }
+
     /* printf("got (%d): %s\n", (int)nchars, s); */
     if(nchars == -1) {
         return (const char*)-1;
@@ -124,6 +134,26 @@ const char *eval_read_string() {
     /* remove delimiter */
     s[nchars-1] = 0;
     return s;
+}
+
+/* #(rc) */
+const char *eval_read_char() {
+    char *s = NULL;
+    size_t slen;
+    printf("] ");
+    ssize_t nchars = getline(&s, &slen, stdin);
+    if(nchars == -1 || slen == 0) {
+        return (const char*)-1;
+    }
+    s[1] = 0;
+    return s;
+}
+
+/* #(cm, X) -- change metacharacter to X */
+const char *eval_change_metachar(const char *s) {
+    printf("Meta character changed from %c to %c\n", metachar, s[0]);
+    metachar = s[0];
+    return NULL;
 }
 
 /* #(ps, foo) */
@@ -190,6 +220,12 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
     /* figure out which function is being called */
     if(strncmp(argptrs[0], "rs", MAX_STRING_SIZE) == 0) {
         rval = eval_read_string();
+    }
+    else if(strncmp(argptrs[0], "rc", MAX_STRING_SIZE) == 0) {
+        rval = eval_read_char();
+    }
+    else if(strncmp(argptrs[0], "cm", MAX_STRING_SIZE) == 0) {
+        rval = eval_change_metachar(argptrs[1]);
     }
     else if(strncmp(argptrs[0], "ps", MAX_STRING_SIZE) == 0) {
         rval = eval_print_string(argptrs[1], out);

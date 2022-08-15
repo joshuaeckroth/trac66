@@ -1,7 +1,6 @@
 #ifndef TRAC_H
 #define TRAC_H
 
-#define READ_STRING_DELIM '\''
 #define MAX_STRING_SIZE 1024
 
 #define DELETED 127 /* ASCII DEL (delete) */
