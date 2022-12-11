@@ -24,6 +24,8 @@ int main() {
     eval(s, out);
     asprintf(&s, "#(ps,#(cl,BB))");
     eval(s, out);
+    asprintf(&s, "#(ss,AA,A,C))#(ps,#(cl,AA,Q,R))");
+    eval(s, out);
 
     fclose(out);
 

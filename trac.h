@@ -16,6 +16,7 @@
 /* table of contents */
 
 #define MAX_TOC_NAME_SIZE 256
+#define MAX_ARG_SIZE 256
 
 typedef struct tocentry {
     char *name;
@@ -32,7 +33,8 @@ void debug_print_toc();
 /* eval funcs */
 
 const char *eval_define_string(const char *name, const char *val);
-const char *eval_call_string(const char *name);
+const char *eval_call_string(const char *name, const char **args);
+const char *eval_segment_string(const char *name, const char **args);
 const char *eval_read_string();
 const char *eval_print_string(const char *s, FILE *out);
 const char *func_dispatch(char *ns, int start, int end, FILE *out);

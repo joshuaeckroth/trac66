@@ -9,6 +9,11 @@ tocentry *tochead;
 
 int metachar = '\'';
 
+int min(int a, int b) {
+    if(a > b) { return b; }
+    else { return a; }
+}
+
 void print_ns(const char *ns) {
     int i = 0;
     while(ns[i] != 0) {
@@ -100,19 +105,6 @@ void debug_print_toc() {
     printf("TOC has %d elements.\n", i);
 }
 
-/* #(ds, foo, bar) */
-const char *eval_define_string(const char *name, const char *val) {
-    //printf("define string: %s => %s\n", name, val);
-    define_string(name, val);
-    return NULL;
-}
-
-/* #(cl, foo) */
-const char *eval_call_string(const char *name) {
-    //printf("call string: %s\n", name);
-    return get_string(name);
-}
-
 /* #(rs) */
 const char *eval_read_string() {
     /* printf("read string\n"); */
@@ -163,12 +155,97 @@ const char *eval_print_string(const char *s, FILE *out) {
     return NULL;
 }
 
+/* #(ds, foo, bar) */
+const char *eval_define_string(const char *name, const char *val) {
+    //printf("define string: %s => %s\n", name, val);
+    define_string(name, val);
+    return NULL;
+}
+
+/* #(ss, N, X1, X2, ...) */
+const char *eval_segment_string(const char *name, const char **args) {
+    printf("name: %s\n", name);
+    const char *orig_val = get_string(name);
+    printf("Orig val: %s\n", orig_val);
+    char *new_val = (char*)malloc(min(MAX_STRING_SIZE, strnlen(orig_val, MAX_STRING_SIZE) * 3));
+    strcpy(new_val, orig_val);
+    char *val = orig_val;
+    for(int i = 0; i < MAX_ARG_SIZE; i++) {
+        if(args[i]) {
+            printf("ARG[%d] = %s\n", i, args[i]);
+            printf("val = %s\n", val);
+            int val_size = strnlen(val, MAX_STRING_SIZE);
+            int val_pos = 0;
+            int new_val_pos = 0;
+            while(val_pos < val_size) {
+                char *found_pos = strstr(val+val_pos, args[i]);
+                printf("found pos: %p\n", found_pos);
+                if(found_pos) {
+                    int j = 0;
+                    while((val+val_pos+j) < found_pos) {
+                        new_val[new_val_pos++] = val[j++];
+                    }
+                    new_val[new_val_pos] = '\0';
+                    char *new_new_val = (char*)malloc(strnlen(new_val, MAX_STRING_SIZE) * 3);
+                    new_val_pos = snprintf(new_new_val, MAX_STRING_SIZE, "%s%%%d", new_val, i);
+                    free(new_val);
+                    new_val = new_new_val;
+                    val_pos = j + strnlen(args[i], MAX_STRING_SIZE);
+                } else {
+                    printf("here, val: %s\n", val + val_pos);
+                    printf("Val pos: %d, new val pos: %d\n", val_pos, new_val_pos);
+                    for(int j = val_pos; j < val_size; j++) {
+                        new_val[new_val_pos++] = val[j];
+                    }
+                    new_val[new_val_pos] = '\0';
+                    val_pos = val_size;
+                }
+                printf("Result from partial ARG[%d] = %s\n", i, new_val);
+                printf("Val pos: %d, new val pos: %d\n", val_pos, new_val_pos);
+            }
+            printf("Result from ARG[%d] = %s\n", i, new_val);
+            if(val != orig_val) {
+                free(val);
+            }
+            val = new_val;
+            new_val = (char*)malloc(min(MAX_STRING_SIZE, strnlen(val, MAX_STRING_SIZE) * 3));
+            strcpy(new_val, val);
+        } else {
+            break;
+        }
+    }
+    printf("New string: %s\n", new_val);
+    define_string(name, new_val);
+    return NULL;
+}
+
+/* #(cl, N, X1, X2, ...) */
+const char *eval_call_string(const char *name, const char **args) {
+    printf("call string: %s\n", name);
+    char *val = get_string(name);
+    printf("val: %s\n", val);
+    char *pos;
+    char *search = (char*)malloc(MAX_ARG_SIZE / 10 + 1);;
+    for(int i = 0; i < MAX_ARG_SIZE; i++) {
+        if(args[i]) {
+            sprintf(search, "%%%d", i);
+            if(pos = strstr(val, search)) {
+                printf("Found %%%d at %s\n", i, pos);
+            }
+        }
+    }
+    return NULL;
+}
+
+/* #(cs, foo, bar) */
+//const char *eval_call_segment(
+
 /* creates an array of argptrs (const char *), for funcname and args,
  * plus an extra NULL ptr to indicate end */
 char **find_args(char *ns, int start, int end) {
     int pos = start;
     int argcount = 0;
-    while(ns[pos] != FUNCEND) {
+    while(ns[pos] != FUNCEND && argcount < MAX_ARG_SIZE) {
         if(ns[pos] == ARGPTR) {
             argcount++;
         }
@@ -215,7 +292,7 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
     const char *rval = NULL;
     char **argptrs = find_args(ns, start, end);
 
-    //print_args(argptrs);
+    print_args(argptrs);
 
     /* figure out which function is being called */
     if(strncmp(argptrs[0], "rs", MAX_STRING_SIZE) == 0) {
@@ -231,10 +308,13 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
         rval = eval_print_string(argptrs[1], out);
     }
     else if(strncmp(argptrs[0], "cl", MAX_STRING_SIZE) == 0) {
-        rval = eval_call_string(argptrs[1]);
+        rval = eval_call_string(argptrs[1], (const char**)&argptrs[2]);
     }
     else if(strncmp(argptrs[0], "ds", MAX_STRING_SIZE) == 0) {
         rval = eval_define_string(argptrs[1], argptrs[2]);
+    }
+    else if(strncmp(argptrs[0], "ss", MAX_STRING_SIZE) == 0) {
+        rval = eval_segment_string(argptrs[1], (const char**)&argptrs[2]);
     }
     else
     {
