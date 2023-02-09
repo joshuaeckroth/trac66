@@ -15,17 +15,19 @@ int main() {
     char *s;
 
     asprintf(&s, "#(ds,AA,CAT)");
-    eval(s, out);
+    free(eval(s, out));
     asprintf(&s, "#(ds,BB,(#(cl,AA)))");
-    eval(s, out);
+    free(eval(s, out));
+    asprintf(&s, "#(ps, foo)");
+    free(eval(s, out));
     asprintf(&s, "#(ps,(#(cl,BB)))");
-    eval(s, out);
+    free(eval(s, out));
     asprintf(&s, "#(ps,##(cl,BB))");
-    eval(s, out);
+    free(eval(s, out));
     asprintf(&s, "#(ps,#(cl,BB))");
-    eval(s, out);
-    asprintf(&s, "#(ss,AA,A,C))#(ps,#(cl,AA,Q,R))");
-    eval(s, out);
+    free(eval(s, out));
+    asprintf(&s, "#(ss,AA,A,C))#(cl,AA,Q,R)");
+    free(eval(s, out));
 
     fclose(out);
 

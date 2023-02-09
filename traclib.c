@@ -52,15 +52,15 @@ void define_string(const char *name, const char *val) {
         /* free existing val */
         free((void*)te->val);
         /* set new val */
-        te->val = (char*)malloc(strlen(val));
+        te->val = (char*)malloc(strlen(val)+1);
         strcpy(te->val, val);
     } else {
         /* new entry (insert at front) */
         te = (tocentry*)malloc(sizeof(tocentry));
         te->next = tochead;
-        te->name = (char*)malloc(strlen(name));
+        te->name = (char*)malloc(strlen(name)+1);
         strcpy(te->name, name);
-        te->val = (char*)malloc(strlen(val));
+        te->val = (char*)malloc(strlen(val)+1);
         strcpy(te->val, val);
         tochead = te;
     }
@@ -167,7 +167,7 @@ const char *eval_segment_string(const char *name, const char **args) {
     printf("name: %s\n", name);
     const char *orig_val = get_string(name);
     printf("Orig val: %s\n", orig_val);
-    char *new_val = (char*)malloc(min(MAX_STRING_SIZE, strnlen(orig_val, MAX_STRING_SIZE) * 3));
+    char *new_val = (char*)malloc(MAX_STRING_SIZE);
     strcpy(new_val, orig_val);
     char *val = orig_val;
     for(int i = 0; i < MAX_ARG_SIZE; i++) {
@@ -186,7 +186,7 @@ const char *eval_segment_string(const char *name, const char **args) {
                         new_val[new_val_pos++] = val[j++];
                     }
                     new_val[new_val_pos] = '\0';
-                    char *new_new_val = (char*)malloc(strnlen(new_val, MAX_STRING_SIZE) * 3);
+                    char *new_new_val = (char*)malloc(MAX_STRING_SIZE);
                     new_val_pos = snprintf(new_new_val, MAX_STRING_SIZE, "%s%%%d", new_val, i);
                     free(new_val);
                     new_val = new_new_val;
@@ -208,7 +208,7 @@ const char *eval_segment_string(const char *name, const char **args) {
                 free(val);
             }
             val = new_val;
-            new_val = (char*)malloc(min(MAX_STRING_SIZE, strnlen(val, MAX_STRING_SIZE) * 3));
+            new_val = (char*)malloc(MAX_STRING_SIZE);
             strcpy(new_val, val);
         } else {
             break;
@@ -222,19 +222,45 @@ const char *eval_segment_string(const char *name, const char **args) {
 /* #(cl, N, X1, X2, ...) */
 const char *eval_call_string(const char *name, const char **args) {
     printf("call string: %s\n", name);
-    char *val = get_string(name);
+    char *orig_val = get_string(name);
+    if(orig_val == NULL) {
+            printf("orig_val: %d\n", orig_val);
+            return NULL;
+    }
+    char *val = (char*)malloc(strlen(orig_val)+1);
+    strcpy(val, orig_val);
     printf("val: %s\n", val);
     char *pos;
-    char *search = (char*)malloc(MAX_ARG_SIZE / 10 + 1);;
+    char *search = (char*)malloc(MAX_ARG_SIZE / 10 + 1);
     for(int i = 0; i < MAX_ARG_SIZE; i++) {
+        printf("i = %d\n", i);
         if(args[i]) {
             sprintf(search, "%%%d", i);
             if(pos = strstr(val, search)) {
-                printf("Found %%%d at %s\n", i, pos);
+                char *back_val = pos+2+(pos-val)/10;
+                char *front_val = (char*)malloc(pos-val+1);
+                int j = 0;
+                for(; j < pos-val; j++) {
+                    front_val[j] = val[j];
+                }
+                front_val[j] = 0;
+                printf("Found %%%d at %s, size of number: %d, front val: %s, back val: %s\n",
+                       i, pos, 1+(int)(pos-val)/10,
+                       front_val, back_val);
+                char *new_val = (char*)malloc(j + strlen(args[i]) + strlen(back_val) + 1);
+                sprintf(new_val, "%s%s%s", front_val, args[i], back_val);
+                free(front_val);
+                free(val);
+                val = new_val;
+                printf("new val: %s\n", new_val);
             }
+        } else {
+            break;
         }
     }
-    return NULL;
+    free(search);
+    printf("returning: %s\n", val);
+    return val;
 }
 
 /* #(cs, foo, bar) */
@@ -259,9 +285,11 @@ char **find_args(char *ns, int start, int end) {
     for(int i = 0; i < argcount; i++) {
         /* move to end of arg */
         while(ns[pos] != FUNCEND && ns[pos] != ARGPTR) pos++;
+        printf("ns: %d\n", ns);
+        printf("pos = %d, lastpos = %d, argcount = %d\n", pos, lastpos, argcount);
         ns[pos] = 0; /* nul-terminate arg, for strcpy */
         /* copy arg to argptrs */
-        argptrs[i] = (char*)malloc(pos-lastpos);
+        argptrs[i] = (char*)malloc(pos-lastpos+1);
         strcpy(argptrs[i], ns+lastpos);
         pos++;
         lastpos = pos;
@@ -340,9 +368,12 @@ const char *eval(char *s, FILE *out) {
     rule1:
     /* The character under the scanning pointer is examined. If there is
      * no character left (active string empty), go to rule 14 */
+    printf("eval s = %s, sp = %d, length = %d, ns = %s\n", s, sp, strlen(s), ns);
     if(sp >= slen) goto rule14;
 
     if(s[sp] == 0x04) { /* Ctrl-D */
+        free(s);
+        free(ns);
         return NULL;
     }
 
@@ -484,6 +515,8 @@ const char *eval(char *s, FILE *out) {
         fval = func_dispatch(ns, funcstart+1, cl, out);
         //printf("got fval: %s\n", fval);
         if(fval == (const char*)-1) {
+            free(ns);
+            free(s);
             return fval;
         }
 
@@ -509,11 +542,12 @@ const char *eval(char *s, FILE *out) {
      * the left of (preceding) the first unscanned character in the active
      * string. The scanning pointer is reset so as to point to the location
      * preceding the first character of the new value string. Go to rule 13. */
-    if(ns[funcstart] == ACTIVEFUNC) {
+    if(funcstart >= 0 && ns[funcstart] == ACTIVEFUNC) {
         //printf("got fval: %s\n", fval);
         char *s2;
         //s[sp] = 0;
         asprintf(&s2, "%s%s", fval, s+sp+1);
+        free(fval);
         free(s);
         s = s2;
         slen = strnlen(s2, MAX_STRING_SIZE);
@@ -529,7 +563,7 @@ const char *eval(char *s, FILE *out) {
      * pointed to by the current begin-of-function pointer. Delete the argument
      * and function pointers back to the begin-of-function pointer. The
      * scanning pointer is not reset. Go to rule 15. */
-    if(ns[funcstart] == NEUTRALFUNC) {
+    if(funcstart >= 0 && ns[funcstart] == NEUTRALFUNC) {
         char *ns2;
         ns[funcstart] = 0; /* terminate neutral string at start of function */
         /* gen new netural string as prior-truncated-neutral + fval */
