@@ -18,7 +18,7 @@ int main() {
     eval(s, out);
     asprintf(&s, "#(ds,BB,(#(cl,AA)))");
     eval(s, out);
-    asprintf(&s, "#(ps, foo)");
+    asprintf(&s, "#(ps,foo)");
     eval(s, out);
     asprintf(&s, "#(ps,(#(cl,BB)))");
     eval(s, out);

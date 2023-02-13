@@ -42,7 +42,7 @@ void define_string(const char *name, const char *val) {
     while(te != NULL) {
         /* note: NULL is a valid name */
         if((te->name == NULL && name == NULL) ||
-            strncmp(te->name, name, MAX_TOC_NAME_SIZE) == 0) {
+                strncmp(te->name, name, MAX_TOC_NAME_SIZE) == 0) {
             break;
         }
         te = te->next;
@@ -54,7 +54,7 @@ void define_string(const char *name, const char *val) {
         /* set new val */
         te->val = (char*)malloc(strlen(val)+1);
         strcpy(te->val, val);
-        free(val);
+        free((void*)val);
     } else {
         /* new entry (insert at front) */
         te = (tocentry*)malloc(sizeof(tocentry));
@@ -73,7 +73,7 @@ const char *get_string(const char *name) {
     while(te != NULL) {
         /* note: NULL is a valid name */
         if((te->name == NULL && name == NULL) ||
-            strncmp(te->name, name, MAX_TOC_NAME_SIZE) == 0) {
+                strncmp(te->name, name, MAX_TOC_NAME_SIZE) == 0) {
             break;
         }
         te = te->next;
@@ -172,7 +172,7 @@ const char *eval_segment_string(const char *name, const char **args) {
     printf("Orig val: %s\n", orig_val);
     char *new_val = (char*)malloc(MAX_STRING_SIZE);
     strcpy(new_val, orig_val);
-    char *val = orig_val;
+    char *val = (char*)orig_val;
     for(int i = 0; i < MAX_ARG_SIZE; i++) {
         if(args[i]) {
             printf("ARG[%d] = %s\n", i, args[i]);
@@ -228,10 +228,9 @@ const char *eval_segment_string(const char *name, const char **args) {
 /* #(cl, N, X1, X2, ...) */
 const char *eval_call_string(const char *name, const char **args) {
     printf("call string: %s\n", name);
-    char *orig_val = get_string(name);
+    const char *orig_val = get_string(name);
     if(orig_val == NULL) {
-            printf("orig_val: %d\n", orig_val);
-            return NULL;
+        return NULL;
     }
     char *val = (char*)malloc(strlen(orig_val)+1);
     strcpy(val, orig_val);
@@ -242,7 +241,7 @@ const char *eval_call_string(const char *name, const char **args) {
         printf("i = %d\n", i);
         if(args[i]) {
             sprintf(search, "%%%d", i);
-            if(pos = strstr(val, search)) {
+            if((pos = strstr(val, search)) != 0) {
                 char *back_val = pos+2+(pos-val)/10;
                 char *front_val = (char*)malloc(pos-val+1);
                 int j = 0;
@@ -251,8 +250,8 @@ const char *eval_call_string(const char *name, const char **args) {
                 }
                 front_val[j] = 0;
                 printf("Found %%%d at %s, size of number: %d, front val: %s, back val: %s\n",
-                       i, pos, 1+(int)(pos-val)/10,
-                       front_val, back_val);
+                        i, pos, 1+(int)(pos-val)/10,
+                        front_val, back_val);
                 char *new_val = (char*)malloc(j + strlen(args[i]) + strlen(back_val) + 1);
                 sprintf(new_val, "%s%s%s", front_val, args[i], back_val);
                 free(front_val);
@@ -291,8 +290,6 @@ char **find_args(char *ns, int start, int end) {
     for(int i = 0; i < argcount; i++) {
         /* move to end of arg */
         while(ns[pos] != FUNCEND && ns[pos] != ARGPTR) pos++;
-        printf("ns: %d\n", ns);
-        printf("pos = %d, lastpos = %d, argcount = %d\n", pos, lastpos, argcount);
         ns[pos] = 0; /* nul-terminate arg, for strcpy */
         /* copy arg to argptrs */
         argptrs[i] = (char*)malloc(pos-lastpos+1);
@@ -368,13 +365,13 @@ const char *eval(char *s, FILE *out) {
     int sp = 0; /* sp is the "scanning pointer" */
     char *ns = (char*)calloc(MAX_STRING_SIZE, 1); /* neutral string */
     int cl = 0; /* cl is the "current location" (in the neutral string) */
-    const char *fval = NULL; /* function return value, for #() functions */
+    char *fval = NULL; /* function return value, for #() functions */
     int funcstart = -1; /* start of current func in ns (ACTIVEFUNC or NEUTRALFUNC mark) */
 
-    rule1:
+rule1:
     /* The character under the scanning pointer is examined. If there is
      * no character left (active string empty), go to rule 14 */
-    printf("eval s = %s, sp = %d, length = %d, ns = %s\n", s, sp, strlen(s), ns);
+    printf("eval s = %s, sp = %d, length = %d, ns = %s\n", s, sp, (int)strlen(s), ns);
     if(sp >= slen) goto rule14;
 
     if(s[sp] == 0x04) { /* Ctrl-D */
@@ -384,12 +381,12 @@ const char *eval(char *s, FILE *out) {
     }
 
     /*
-    printf("-s:  ");
-    print_ns(s);
-    printf("-ns: ");
-    print_ns(ns);
-    debug_print_toc();
-    */
+       printf("-s:  ");
+       print_ns(s);
+       printf("-ns: ");
+       print_ns(ns);
+       debug_print_toc();
+     */
 
     /*rule2:*/
     /* If the character just examined (by rule 1) is a begin parenthesis,
@@ -511,14 +508,14 @@ const char *eval(char *s, FILE *out) {
          * an ACTIVEFUNC or NEUTRALFUNC mark; save this position */
         funcstart = cl;
         while(funcstart >= 0 && ns[funcstart] != ACTIVEFUNC
-            && ns[funcstart] != NEUTRALFUNC) { funcstart--; }
+                && ns[funcstart] != NEUTRALFUNC) { funcstart--; }
 
         /* call a helper function to figure out which function is being called
          * and extract the arguments; returns the called function's value */
         //printf("func dispatch: %d, %d\n", funcstart+1, cl);
         //printf("ns: ");
         //print_ns(ns);
-        fval = func_dispatch(ns, funcstart+1, cl, out);
+        fval = (char*)func_dispatch(ns, funcstart+1, cl, out);
         //printf("got fval: %s\n", fval);
         if(fval == (const char*)-1) {
             free(ns);
@@ -539,7 +536,7 @@ const char *eval(char *s, FILE *out) {
     cl++;
     goto rule15;
 
-    rule10:
+rule10:
     /* If the function has null value, go to rule 13. */
     if(fval == NULL) goto rule13;
 
@@ -584,7 +581,7 @@ const char *eval(char *s, FILE *out) {
         goto rule15;
     }
 
-    rule13:
+rule13:
     /* Delete the argument and function pointers back to the begin-of-function
      * pointer for the function just evaluated, resetting the current location
      * to this point. Go to rule 15. */
@@ -595,7 +592,7 @@ const char *eval(char *s, FILE *out) {
     }
     goto rule15;
 
-    rule14:
+rule14:
     /* Delete the neutral string, initialize its pointers, reload a new copy of
      * the idling procedure into the active string, reset the scanning pointer
      * to the beginning of the idling procedure, and go to rule 1. */
@@ -606,7 +603,7 @@ const char *eval(char *s, FILE *out) {
     free(s);
     return NULL;
 
-    rule15:
+rule15:
     /* Move the scanning pointer ahead to the next character. Go to rule 1. */
     /* printf("sp %d (%c) moving to %d (%c)\n", sp, s[sp], sp+1, s[sp+1]); */
     sp++;
