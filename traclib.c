@@ -54,6 +54,7 @@ void define_string(const char *name, const char *val) {
         /* set new val */
         te->val = (char*)malloc(strlen(val)+1);
         strcpy(te->val, val);
+        free(val);
     } else {
         /* new entry (insert at front) */
         te = (tocentry*)malloc(sizeof(tocentry));
@@ -88,6 +89,8 @@ void free_toc() {
     tocentry *next;
     while(tochead != NULL) {
         next = tochead->next;
+        free(tochead->name);
+        free(tochead->val);
         free((void*)tochead);
         tochead = next;
     }
@@ -213,6 +216,9 @@ const char *eval_segment_string(const char *name, const char **args) {
         } else {
             break;
         }
+    }
+    if(val != orig_val) {
+        free(val);
     }
     printf("New string: %s\n", new_val);
     define_string(name, new_val);
@@ -569,6 +575,7 @@ const char *eval(char *s, FILE *out) {
         /* gen new netural string as prior-truncated-neutral + fval */
         asprintf(&ns2, "%s%s", ns, fval);
         cl = strlen(ns) + strlen(fval);
+        free(fval);
         free(ns);
         ns = ns2;
         //printf("ns rule12: ");
@@ -583,7 +590,9 @@ const char *eval(char *s, FILE *out) {
      * to this point. Go to rule 15. */
     /* No need to actually delete function pointers (which we have as just marks
      * in the neutral string); we only need to reset the current location */
-    cl = funcstart;
+    if(funcstart >= 0) {
+        cl = funcstart;
+    }
     goto rule15;
 
     rule14:

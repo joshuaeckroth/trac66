@@ -15,19 +15,19 @@ int main() {
     char *s;
 
     asprintf(&s, "#(ds,AA,CAT)");
-    free(eval(s, out));
+    eval(s, out);
     asprintf(&s, "#(ds,BB,(#(cl,AA)))");
-    free(eval(s, out));
+    eval(s, out);
     asprintf(&s, "#(ps, foo)");
-    free(eval(s, out));
+    eval(s, out);
     asprintf(&s, "#(ps,(#(cl,BB)))");
-    free(eval(s, out));
+    eval(s, out);
     asprintf(&s, "#(ps,##(cl,BB))");
-    free(eval(s, out));
+    eval(s, out);
     asprintf(&s, "#(ps,#(cl,BB))");
-    free(eval(s, out));
+    eval(s, out);
     asprintf(&s, "#(ss,AA,A,C))#(cl,AA,Q,R)");
-    free(eval(s, out));
+    eval(s, out);
 
     fclose(out);
 
@@ -51,6 +51,7 @@ int main() {
             perror("Error:");
         }
     }
+    free_toc();
 
     return 0;
 }
