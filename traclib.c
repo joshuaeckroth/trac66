@@ -285,6 +285,26 @@ const char *eval_equal(const char *s1, const char *s2, const char *s3, const cha
     }
 }
 
+/* #(ad, X1, X2, Z) */
+/* Adds decimal values X1 and X2 (received as strings); if overflow, returns Z (ignored here) */
+const char *eval_add(const char *x1, const char *x2, const char *overflow) {
+    double dx1 = atof(x1);
+    double dx2 = atof(x2);
+    char* ret;
+    asprintf(&ret, "%5f", dx1+dx2);
+    return ret;
+}
+
+/* #(ml, X1, X2, Z) */
+/* Multiplies decimal values X1 and X2 (received as strings); if overflow, returns Z (ignored here) */
+const char *eval_multiply(const char *x1, const char *x2, const char *overflow) {
+    double dx1 = atof(x1);
+    double dx2 = atof(x2);
+    char* ret;
+    asprintf(&ret, "%5f", dx1*dx2);
+    return ret;
+}
+
 /* creates an array of argptrs (const char *), for funcname and args,
  * plus an extra NULL ptr to indicate end */
 char **find_args(char *ns, int start, int end) {
@@ -364,6 +384,12 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
     }
     else if(strncmp(argptrs[0], "eq", MAX_STRING_SIZE) == 0) {
         rval = eval_equal(argptrs[1], argptrs[2], argptrs[3], argptrs[4]);
+    }
+    else if(strncmp(argptrs[0], "ad", MAX_STRING_SIZE) == 0) {
+        rval = eval_add(argptrs[1], argptrs[2], argptrs[3]);
+    }
+    else if(strncmp(argptrs[0], "ml", MAX_STRING_SIZE) == 0) {
+        rval = eval_multiply(argptrs[1], argptrs[2], argptrs[3]);
     }
     else
     {

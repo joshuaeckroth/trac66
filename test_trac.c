@@ -32,6 +32,12 @@ int main() {
     eval(s, out);
     asprintf(&s, "#(ps,#(eq,A,B,B,C))");
     eval(s, out);
+    asprintf(&s, "#(ps,#(ad,1.5,2.0,Z))");
+    eval(s, out);
+    asprintf(&s, "#(ps,#(ml,1.5,2.0,Z))");
+    eval(s, out);
+    asprintf(&s, "#(ds,Factorial,(#(eq,1,X,1,(#(ml,X,#(cl,Factorial,#(ad,X,-1)))))))#(ss,Factorial,X)#(cl,Factorial,5)");
+    eval(s, out);
 
     fclose(out);
 

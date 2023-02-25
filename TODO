@@ -1,4 +1,5 @@
 x figure out why valgrind shows memory leak
 x create test.gold
+- debug Factorial
 
 
