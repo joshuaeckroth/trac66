@@ -271,6 +271,20 @@ const char *eval_call_string(const char *name, const char **args) {
 /* #(cs, foo, bar) */
 //const char *eval_call_segment(
 
+/* #(eq, X1, X2, X3, X4) */
+/* If X1 equals X2, return X3; otherwise, return X4. */
+const char *eval_equal(const char *s1, const char *s2, const char *s3, const char *s4) {
+    if(strncmp(s1, s2, MAX_STRING_SIZE) == 0) {
+        char *ret = (char*)malloc(strlen(s3)+1);
+        strcpy(ret, s3);
+        return ret;
+    } else {
+        char *ret = (char*)malloc(strlen(s4)+1);
+        strcpy(ret, s4);
+        return ret;
+    }
+}
+
 /* creates an array of argptrs (const char *), for funcname and args,
  * plus an extra NULL ptr to indicate end */
 char **find_args(char *ns, int start, int end) {
@@ -299,6 +313,7 @@ char **find_args(char *ns, int start, int end) {
     }
     return argptrs;
 }
+
 
 void free_args(char **argptrs) {
     int i = 0;
@@ -346,6 +361,9 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
     }
     else if(strncmp(argptrs[0], "ss", MAX_STRING_SIZE) == 0) {
         rval = eval_segment_string(argptrs[1], (const char**)&argptrs[2]);
+    }
+    else if(strncmp(argptrs[0], "eq", MAX_STRING_SIZE) == 0) {
+        rval = eval_equal(argptrs[1], argptrs[2], argptrs[3], argptrs[4]);
     }
     else
     {

@@ -28,6 +28,10 @@ int main() {
     eval(s, out);
     asprintf(&s, "#(ss,AA,A,C))#(cl,AA,Q,R)");
     eval(s, out);
+    asprintf(&s, "#(ps,#(eq,A,A,B,C))");
+    eval(s, out);
+    asprintf(&s, "#(ps,#(eq,A,B,B,C))");
+    eval(s, out);
 
     fclose(out);
 

@@ -1,7 +1,4 @@
-2023-02-09:
 x figure out why valgrind shows memory leak
-- create test.gold
-
-2023-02-12:
+x create test.gold
 
 
