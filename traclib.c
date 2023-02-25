@@ -182,18 +182,19 @@ const char *eval_segment_string(const char *name, const char **args) {
             int new_val_pos = 0;
             while(val_pos < val_size) {
                 char *found_pos = strstr(val+val_pos, args[i]);
-                printf("found pos: %p\n", found_pos);
+                printf("found pos: %ld\n", (found_pos-val));
                 if(found_pos) {
                     int j = 0;
                     while((val+val_pos+j) < found_pos) {
-                        new_val[new_val_pos++] = val[j++];
+                        new_val[new_val_pos++] = val[val_pos+j++];
                     }
                     new_val[new_val_pos] = '\0';
                     char *new_new_val = (char*)malloc(MAX_STRING_SIZE);
                     new_val_pos = snprintf(new_new_val, MAX_STRING_SIZE, "%s%%%d", new_val, i);
                     free(new_val);
                     new_val = new_new_val;
-                    val_pos = j + strnlen(args[i], MAX_STRING_SIZE);
+                    printf("j = %d\n", j);
+                    val_pos += j+1;
                 } else {
                     printf("here, val: %s\n", val + val_pos);
                     printf("Val pos: %d, new val pos: %d\n", val_pos, new_val_pos);
@@ -279,6 +280,21 @@ const char *eval_equal(const char *s1, const char *s2, const char *s3, const cha
         strcpy(ret, s3);
         return ret;
     } else {
+        char *success1, *success2;
+        double x1 = strtod(s1, &success1);
+        double x2 = strtod(s2, &success2);
+        if(success1 != s1 && success2 != s2) {
+            // double vals
+            if(x1 == x2) {
+                char *ret = (char*)malloc(strlen(s3)+1);
+                strcpy(ret, s3);
+                return ret;
+            } else {
+                char *ret = (char*)malloc(strlen(s4)+1);
+                strcpy(ret, s4);
+                return ret;
+            }
+        }
         char *ret = (char*)malloc(strlen(s4)+1);
         strcpy(ret, s4);
         return ret;
@@ -358,7 +374,7 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
     const char *rval = NULL;
     char **argptrs = find_args(ns, start, end);
 
-    print_args(argptrs);
+    //print_args(argptrs);
 
     /* figure out which function is being called */
     if(strncmp(argptrs[0], "rs", MAX_STRING_SIZE) == 0) {
@@ -415,7 +431,7 @@ const char *eval(char *s, FILE *out) {
 rule1:
     /* The character under the scanning pointer is examined. If there is
      * no character left (active string empty), go to rule 14 */
-    printf("eval s = %s, sp = %d, length = %d, ns = %s\n", s, sp, (int)strlen(s), ns);
+    //printf("eval s = %s, sp = %d, length = %d, ns = %s\n", s, sp, (int)strlen(s), ns);
     if(sp >= slen) goto rule14;
 
     if(s[sp] == 0x04) { /* Ctrl-D */
