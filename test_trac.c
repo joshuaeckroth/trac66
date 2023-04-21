@@ -26,7 +26,11 @@ int main() {
     eval(s, out);
     asprintf(&s, "#(ps,#(cl,BB))");
     eval(s, out);
-    asprintf(&s, "#(ss,AA,A,C))#(cl,AA,Q,R)");
+    asprintf(&s, "#(ss,AA,A,C))#(ps,#(cl,AA,Q,R))");
+    eval(s, out);
+    asprintf(&s, "#(ds,CC,CATCATCAT)");
+    eval(s, out);
+    asprintf(&s, "#(ss,CC,A,C))#(ps,#(cl,CC,Q,R))");
     eval(s, out);
     asprintf(&s, "#(ps,#(eq,A,A,B,C))");
     eval(s, out);
@@ -36,7 +40,7 @@ int main() {
     eval(s, out);
     asprintf(&s, "#(ps,#(ml,1.5,2.0,Z))");
     eval(s, out);
-    asprintf(&s, "#(ds,Factorial,(#(eq,1,X,1,(#(ml,X,#(cl,Factorial,#(ad,X,-1)))))))#(ss,Factorial,X)#(cl,Factorial,5)");
+    asprintf(&s, "#(ds,Factorial,(#(eq,1,X,1,(#(ml,X,#(cl,Factorial,#(ad,X,-1)))))))#(ss,Factorial,X)#(ps,#(cl,Factorial,5))");
     eval(s, out);
 
     fclose(out);

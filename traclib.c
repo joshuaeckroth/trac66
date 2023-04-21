@@ -242,17 +242,16 @@ const char *eval_call_string(const char *name, const char **args) {
         printf("i = %d\n", i);
         if(args[i]) {
             sprintf(search, "%%%d", i);
-            if((pos = strstr(val, search)) != 0) {
-                char *back_val = pos+2+(pos-val)/10;
+            while((pos = strstr(val, search)) != 0) {
+                char *back_val = pos+strlen(search);
                 char *front_val = (char*)malloc(pos-val+1);
                 int j = 0;
                 for(; j < pos-val; j++) {
                     front_val[j] = val[j];
                 }
                 front_val[j] = 0;
-                printf("Found %%%d at %s, size of number: %d, front val: %s, back val: %s\n",
-                        i, pos, 1+(int)(pos-val)/10,
-                        front_val, back_val);
+                printf("Found %%%d at %s, ptr diff: %ld, front val: %s, back val: %s\n",
+                        i, pos, pos-val, front_val, back_val);
                 char *new_val = (char*)malloc(j + strlen(args[i]) + strlen(back_val) + 1);
                 sprintf(new_val, "%s%s%s", front_val, args[i], back_val);
                 free(front_val);
