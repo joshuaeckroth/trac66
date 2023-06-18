@@ -373,7 +373,7 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
     const char *rval = NULL;
     char **argptrs = find_args(ns, start, end);
 
-    //print_args(argptrs);
+    print_args(argptrs);
 
     /* figure out which function is being called */
     if(strncmp(argptrs[0], "rs", MAX_STRING_SIZE) == 0) {
