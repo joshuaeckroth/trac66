@@ -182,7 +182,7 @@ const char *eval_segment_string(const char *name, const char **args) {
             int new_val_pos = 0;
             while(val_pos < val_size) {
                 char *found_pos = strstr(val+val_pos, args[i]);
-                printf("found pos: %ld\n", (found_pos-val));
+                printf("found pos: %ld\n", (long)(found_pos-val));
                 if(found_pos) {
                     int j = 0;
                     while((val+val_pos+j) < found_pos) {
@@ -251,7 +251,7 @@ const char *eval_call_string(const char *name, const char **args) {
                 }
                 front_val[j] = 0;
                 printf("Found %%%d at %s, ptr diff: %ld, front val: %s, back val: %s\n",
-                        i, pos, pos-val, front_val, back_val);
+                        i, pos, (long)(pos-val), front_val, back_val);
                 char *new_val = (char*)malloc(j + strlen(args[i]) + strlen(back_val) + 1);
                 sprintf(new_val, "%s%s%s", front_val, args[i], back_val);
                 free(front_val);
