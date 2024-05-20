@@ -42,7 +42,8 @@ int main(int argc, char *const argv[])
             eval(stdlib_text, stdout);
             printf("done.\n");
             debug_print_toc();
-            printf("\n\n");
+            printf("\n");
+            printf("Type #(cl,Help)' for help.\n\n");
         }
     }
 
