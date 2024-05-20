@@ -5,5 +5,7 @@ x debug Factorial
 - turn on debugging with a command, keep silent otherwise
 - expand on stdlib
 - expand on help text in stdlib
+- build new parser using flex/bison
+- write compiler
 
 
