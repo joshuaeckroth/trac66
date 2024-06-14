@@ -165,8 +165,33 @@ const char *eval_change_metachar(const char *s) {
 
 /* #(ps, foo) */
 const char *eval_print_string(const char *s, FILE *out) {
-    printd("print string: %s\n", s);
-    fprintf(out, "%s\n", s);
+    /* replace escaped chars */
+    ssize_t len = strnlen(s, MAX_STRING_SIZE);
+    char *new_s = (char*)malloc(len+1);
+    int i2 = 0;
+    for(int i = 0; i <= len; i++) {
+        if(s[i] == '\\') {
+            switch(s[i+1]) {
+                case 'n':
+                    new_s[i2] = '\n';
+                    i++;
+                    break;
+                case '#': case '(': case ')': case ',': case '\\':
+                    new_s[i2] = s[i+1];
+                    i++;
+                    break;
+                default:
+                    new_s[i2] = s[i];
+            }
+        } else {
+            new_s[i2] = s[i];
+        }
+        i2++;
+    }
+    printd("print orig string: %s\n", s);
+    printd("print new string: %s\n", new_s);
+    fprintf(out, "%s\n", new_s);
+    free(new_s);
     return NULL;
 }
 
@@ -501,10 +526,23 @@ rule1:
         goto rule1;
     }
 
+    /* new rule */
+    /* If an escape character (\) is examined, add the slash and the next character
+     * to the neutral string. Go to rule 15. */
+    if(s[sp] == '\\') {
+        ns[cl] = s[sp];
+        cl++;
+        sp++;
+        ns[cl] = s[sp];
+        cl++;
+        goto rule15;
+    }
+
     /*rule3:*/
     /* If the character just examined is either a carriage return, a
      * line feed or a tabulate, the character is deleted. Go to rule 15. */
-    if(s[sp] == '\r' || s[sp] == '\n' || s[sp] == '\t') {
+    /* NOTE: removed \n from this list; want to keep it */
+    if(s[sp] == '\r' || s[sp] == '\t') {
         s[sp] = DELETED;
         goto rule15;
     }
