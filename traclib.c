@@ -125,8 +125,12 @@ const char *eval_read_string() {
     printd("read string\n");
     char *s = NULL;
     size_t slen;
-    printd("> ");
+    printf("> ");
     ssize_t nchars = getdelim(&s, &slen, metachar, stdin);
+    if((int)nchars == -1) {
+        return (const char*)-1;
+    }
+    printd("got (%d): %s\n", (int)nchars, s);
     if(metachar != '\n') {
         /* consume \n character */
         char *dummy = NULL;
@@ -134,10 +138,6 @@ const char *eval_read_string() {
         getline(&dummy, &dummylen, stdin);
     }
 
-    /* printd("got (%d): %s\n", (int)nchars, s); */
-    if(nchars == -1) {
-        return (const char*)-1;
-    }
     /* remove delimiter */
     s[nchars-1] = 0;
     return s;
@@ -387,8 +387,12 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
 
     print_args(argptrs);
 
+    /* if no argument at all */
+    if(argptrs[0][0] == '\0') {
+        rval = NULL;
+    }
     /* figure out which function is being called */
-    if(strncmp(argptrs[0], "debug", MAX_STRING_SIZE) == 0) {
+    else if(strncmp(argptrs[0], "debug", MAX_STRING_SIZE) == 0) {
         // #(debug,on) or #(debug,off)
         if(strncmp(argptrs[1], "on", MAX_STRING_SIZE) == 0) {
             debug_on = 1;
@@ -434,6 +438,7 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
         rval = NULL;
     }
     free_args(argptrs);
+    printd("rval = %d\n", rval);
     return rval;
 }
 
@@ -595,12 +600,12 @@ rule1:
         printd("ns: ");
         print_ns(ns);
         fval = (char*)func_dispatch(ns, funcstart+1, cl, out);
-        printd("got fval: %s\n", fval);
         if(fval == (const char*)-1) {
             free(ns);
             free(s);
             return fval;
         }
+        printd("got fval: %s\n", fval);
 
         goto rule10;
     }
