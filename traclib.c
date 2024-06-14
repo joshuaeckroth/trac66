@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-char debug_on = 1;
+char debug_on = 0;
 
 void printd(const char *fmt, ...) {
     va_list ap;
@@ -388,7 +388,17 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
     print_args(argptrs);
 
     /* figure out which function is being called */
-    if(strncmp(argptrs[0], "rs", MAX_STRING_SIZE) == 0) {
+    if(strncmp(argptrs[0], "debug", MAX_STRING_SIZE) == 0) {
+        // #(debug,on) or #(debug,off)
+        if(strncmp(argptrs[1], "on", MAX_STRING_SIZE) == 0) {
+            debug_on = 1;
+        } else if(strncmp(argptrs[1], "off", MAX_STRING_SIZE) == 0) {
+            debug_on = 0;
+        } else {
+            printf("Unknown option to #(debug,...): %s; options are: on, off.\n", argptrs[1]);
+        }
+    }
+    else if(strncmp(argptrs[0], "rs", MAX_STRING_SIZE) == 0) {
         rval = eval_read_string();
     }
     else if(strncmp(argptrs[0], "rc", MAX_STRING_SIZE) == 0) {
