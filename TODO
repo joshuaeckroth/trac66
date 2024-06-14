@@ -2,7 +2,7 @@ x figure out why valgrind shows memory leak
 x create test.gold
 x debug Factorial
 - add better debug messages in function dispatch
-- turn on debugging with a command, keep silent otherwise
+x turn on debugging with a command, keep silent otherwise
 - expand on stdlib
 - expand on help text in stdlib
 - build new parser using flex/bison
