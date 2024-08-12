@@ -36,7 +36,7 @@ int main(int argc, char *const argv[])
                 exit(EXIT_FAILURE);
             }
             size_t read_bytes = fread(stdlib_text, 1, 1024*32-1, stdlib_in);
-            printf("Read %d bytes\n", read_bytes);
+            printf("Read %ld bytes\n", read_bytes);
             stdlib_text[read_bytes] = '\0';
             printf("Evaluating stdlib.trac... ");
             eval(stdlib_text, stdout);

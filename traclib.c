@@ -113,11 +113,27 @@ void debug_print_toc() {
     printd("Table of contents:\n");
     int i = 0;
     while(te != NULL) {
-        printd("  %s => %s\n", te->name, te->val);
+        if(strncmp(te->name, "Help", MAX_STRING_SIZE) != 0) {
+            printd("  %s => %s\n", te->name, te->val);
+            i++;
+        }
         te = te->next;
-        i++;
     }
     printd("TOC has %d elements.\n", i);
+}
+
+void eval_print_toc() {
+    tocentry *te = tochead;
+    printf("Table of contents:\n\n");
+    int i = 0;
+    while(te != NULL) {
+        if(strncmp(te->name, "Help", MAX_STRING_SIZE) != 0) {
+            printf("  %s => %s\n", te->name, te->val);
+            i++;
+        }
+        te = te->next;
+    }
+    printf("\nTOC has %d elements.\n", i);
 }
 
 /* #(rs) */
@@ -190,7 +206,7 @@ const char *eval_print_string(const char *s, FILE *out) {
     }
     printd("print orig string: %s\n", s);
     printd("print new string: %s\n", new_s);
-    fprintf(out, "%s\n", new_s);
+    fprintf(out, "%s", new_s);
     free(new_s);
     return NULL;
 }
@@ -426,6 +442,9 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
         } else {
             printf("Unknown option to #(debug,...): %s; options are: on, off.\n", argptrs[1]);
         }
+    }
+    else if(strncmp(argptrs[0], "toc", MAX_STRING_SIZE) == 0) {
+        eval_print_toc();
     }
     else if(strncmp(argptrs[0], "rs", MAX_STRING_SIZE) == 0) {
         rval = eval_read_string();
