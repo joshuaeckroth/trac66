@@ -1,0 +1,40 @@
+#(ds,Factorial,(#(eq,1,X,1,(#(ml,X,#(cl,Factorial,#(ad,X,-1)))))))
+#(ss,Factorial,X)'
+
+#(ds,BottlesOfBeer,(#(eq,1,X,(#(ps,No more bottles of beer on the wall.\n)),(#(ps,Bottle of beer\n),#(cl,BottlesOfBeer,#(ad,X,-1))))))
+#(ss,BottlesOfBeer,X)'
+
+#(ds,Loop,(#(eq,I,#(ad,E,1),,(#(cl,S)#(cl,Loop,#(ad,I,1),E,(S))))))
+#(ss,Loop,I,E,S)'
+
+#(cl,Loop,1,5,(#(ps,looping\n)))'
+
+#(ds,Help,
+This is the help text...
+
+\#\(debug\,on\) \#\(debug\,off\)
+
+\#\(toc\) - print defined strings (table of contents)
+
+\#\(rs\) - read a string from stdin
+
+\#\(rc\) - read a character from stdin
+
+\#\(cm\) - change the metachar
+
+\#\(ps\) - print a string
+
+\#\(cl\) - call a string
+
+\#\(ds\) - define a string
+
+\#\(ss\) - segment a string
+
+\#\(eq\) - check equality
+
+\#\(ad\) - add
+
+\#\(ml\) - multiply
+
+)'
+

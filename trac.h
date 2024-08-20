@@ -18,6 +18,8 @@
 #define MAX_TOC_NAME_SIZE 256
 #define MAX_ARG_SIZE 256
 
+extern char debug_on;
+
 typedef struct tocentry {
     char *name;
     char *val;
