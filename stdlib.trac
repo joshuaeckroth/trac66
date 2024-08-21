@@ -1,3 +1,6 @@
+Literate programming?
+
+
 #(ds,Factorial,(#(eq,1,X,1,(#(ml,X,#(Factorial,#(ad,X,-1)))))))
 #(ss,Factorial,X)'
 
@@ -8,6 +11,8 @@
 #(ss,Loop,I,E,S)'
 
 #(Loop,1,5,(#(ps,looping\n)))'
+
+This is a comment.
 
 #(ds,Help,
 This is the help text...
@@ -37,4 +42,8 @@ This is the help text...
 \#\(ml\) - multiply
 
 )'
+
+Another comment.
+
+Change metachar to newline; the code will activate readline library for this case, thus allowing history, etc.
 

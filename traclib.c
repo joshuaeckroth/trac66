@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <readline/readline.h>
 
 char debug_on = 0;
 
@@ -141,21 +142,48 @@ const char *eval_read_string() {
     printd("read string\n");
     char *s = NULL;
     size_t slen;
-    printf("> ");
-    ssize_t nchars = getdelim(&s, &slen, metachar, stdin);
+    ssize_t nchars = -1;
+    if(metachar == '\n') { // activate readline
+        printf("Readline\n");
+        s = readline("> ");
+        if(s) {
+            nchars = strnlen(s, MAX_STRING_SIZE);
+        }
+    } else {
+        printf("> ");
+        nchars = getdelim(&s, &slen, metachar, stdin);
+    }
     if((int)nchars == -1) {
         return (const char*)-1;
     }
     printd("got (%d): %s\n", (int)nchars, s);
+    // TODO: remove this conditional?
+    /*
     if(metachar != '\n') {
-        /* consume \n character */
+        // consume \n character
         char *dummy = NULL;
         size_t dummylen;
         getline(&dummy, &dummylen, stdin);
     }
+    */
+    // translate escaped chars (e.g., \n, \t)
+    int pos = 0;
+    int pos2 = 0;
+    while(s[pos]) {
+        s[pos2] = s[pos];
+        if(s[pos] == '\\') {
+            switch(s[pos+1]) {
+                case 'n': s[pos2] = '\n'; pos++; break;
+                case 't': s[pos2] = '\t'; pos++; break;
+            }
+        }
+        pos++; pos2++;
+    }
 
     /* remove delimiter */
-    s[nchars-1] = 0;
+    if(metachar != '\n') {
+        s[pos2-1] = 0;
+    }
     return s;
 }
 
@@ -168,13 +196,14 @@ const char *eval_read_char() {
     if(nchars == -1 || slen == 0) {
         return (const char*)-1;
     }
+    // TODO: handle \n, \t, etc.
     s[1] = 0;
     return s;
 }
 
 /* #(cm, X) -- change metacharacter to X */
 const char *eval_change_metachar(const char *s) {
-    printd("Meta character changed from %c to %c\n", metachar, s[0]);
+    printf("Meta character changed from %c to %c\n", metachar, s[0]);
     metachar = s[0];
     return NULL;
 }

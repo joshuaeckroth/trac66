@@ -1,10 +1,10 @@
 all: trac test_trac
 
 trac: trac.o traclib.o
-	gcc -Wall -Werror -g -o trac trac.o traclib.o
+	gcc -Wall -Werror -g -lreadline -o trac trac.o traclib.o
 
 test_trac: test_trac.o traclib.o
-	gcc -Wall -Werror -g -o test_trac test_trac.o traclib.o
+	gcc -Wall -Werror -g -lreadline -o test_trac test_trac.o traclib.o
 
 traclib.o: traclib.c trac.h
 	gcc -Wall -Werror -g -c traclib.c

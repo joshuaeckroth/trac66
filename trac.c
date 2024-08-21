@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <readline/readline.h>
 
 int main(int argc, char *const argv[])
 {
@@ -43,7 +44,7 @@ int main(int argc, char *const argv[])
             printf("done.\n");
             debug_print_toc();
             printf("\n");
-            printf("Type #(cl,Help)' for help.\n\n");
+            printf("Type #(Help)' for help.\n\n");
         }
     }
 
