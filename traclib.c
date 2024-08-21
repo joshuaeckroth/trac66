@@ -478,8 +478,14 @@ const char *func_dispatch(char *ns, int start, int end, FILE *out)
     }
     else
     {
-        printf("unknown function: \"%s\"\n", argptrs[0]);
-        rval = NULL;
+        // try to find a defined string by this name; if exists, call it
+        const char *str = get_string(argptrs[0]);
+        if(str) {
+            rval = eval_call_string(argptrs[0], (const char**)&argptrs[1]);
+        } else {
+            printf("unknown function: \"%s\"\n", argptrs[0]);
+            rval = NULL;
+        }
     }
     free_args(argptrs);
     printd("rval = %d\n", rval);
