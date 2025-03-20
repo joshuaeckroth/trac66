@@ -1,5 +1,6 @@
-Literate programming?
+Literate programming
 
+This is a comment.
 
 #(ds,Factorial,(#(eq,1,X,1,(#(ml,X,#(Factorial,#(ad,X,-1)))))))
 #(ss,Factorial,X)'
@@ -7,17 +8,45 @@ Literate programming?
 #(ds,BottlesOfBeer,(#(eq,1,X,(#(ps,No more bottles of beer on the wall.\n)),(#(ps,Bottle of beer\n),#(BottlesOfBeer,#(ad,X,-1))))))
 #(ss,BottlesOfBeer,X)'
 
-#(ds,Loop,(#(eq,I,#(ad,E,1),,(#(S)#(Loop,#(ad,I,1),E,(S))))))
+Define a newline as a no-op.
+
+#(ds,
+,)'
+
+Loop "macro," takes two ints (start & end) and a string to execute each iteration.
+(In this macro, string func is not told what the iteration idx is; would need an arg input.)
+
+#(ds,Loop,
+(#(eq,I,#(ad,E,1),,
+(#(S)
+#(Loop,#(ad,I,1),E,(S))))))
 #(ss,Loop,I,E,S)'
 
-#(Loop,1,5,(#(ps,looping\n)))'
+#(Loop,
+1,
+5,
+(#(ps,looping
+)))'
 
-This is a comment.
+
+
+How to define lists?
+
+TODO: make this eq function recursive, perhaps using Loop
+
+#(ds,mylist,(#(eq,IDX,0,foo,(#(eq,IDX,1,bar,)))))'
+#(ss,mylist,IDX)'
+#(ps,#(cl,mylist,3))'
+
+
+#(ps,\n)'
 
 #(ds,Help,
 This is the help text...
 
 \#\(debug\,on\) \#\(debug\,off\)
+
+\#\(cm\) - change the metachar
 
 \#\(toc\) - print defined strings (table of contents)
 
@@ -25,15 +54,13 @@ This is the help text...
 
 \#\(rc\) - read a character from stdin
 
-\#\(cm\) - change the metachar
-
 \#\(ps\) - print a string
-
-\#\(cl\) - call a string
 
 \#\(ds\) - define a string
 
-\#\(ss\) - segment a string
+\#\(ss\) - segment a string so it may be called with args
+
+\#\(cl\) - call a string
 
 \#\(eq\) - check equality
 
